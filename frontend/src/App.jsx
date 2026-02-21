@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { FaTasks, FaUsers, FaChartLine, FaPlus, FaCheck, FaTrash, FaEdit } from 'react-icons/fa';
+import { FaTasks, FaUsers, FaChartLine, FaPlus, FaCheck, FaTrash, FaEdit, FaSignOutAlt } from 'react-icons/fa';
 import axios from 'axios';
+import Auth from './Auth';
 import './App.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 function App() {
+  const [user, setUser] = useState(null);
   const [activeTab, setActiveTab] = useState('tasks');
   const [tasks, setTasks] = useState([]);
   const [users, setUsers] = useState([]);
@@ -27,10 +29,20 @@ function App() {
   });
 
   useEffect(() => {
-    fetchTasks();
-    fetchUsers();
-    fetchStats();
+    // Check if user is already logged in
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      fetchTasks();
+      fetchUsers();
+      fetchStats();
+    }
+  }, [user]);
 
   const fetchTasks = async () => {
     try {
@@ -127,6 +139,22 @@ function App() {
     setShowTaskForm(true);
   };
 
+  const handleLogin = (userData) => {
+    setUser(userData);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    setUser(null);
+    setTasks([]);
+    setUsers([]);
+    setStats(null);
+  };
+
+  if (!user) {
+    return <Auth onLogin={handleLogin} />;
+  }
+
   return (
     <div className="app">
       <header className="header">
@@ -136,6 +164,12 @@ function App() {
             TaskFlow Pro
           </h1>
           <p className="tagline">Streamline Your Workflow with Smart Task Management</p>
+          <div className="user-info">
+            <span className="welcome-text">Welcome, {user.name}!</span>
+            <button className="logout-btn" onClick={handleLogout} title="Logout">
+              <FaSignOutAlt /> Logout
+            </button>
+          </div>
         </div>
       </header>
 
